@@ -18,3 +18,4 @@
 -e .[postgres]
 gevent
 greenlet>=2.0.2
+# pybigquery

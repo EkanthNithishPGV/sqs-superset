@@ -88,7 +88,13 @@ class CeleryConfig:
             "schedule": crontab(minute=10, hour=0),
         },
     }
-
+PREFERRED_DATABASES = [
+    "Apache Druid",
+    "Google BigQuery",
+    "Snowflake",
+    "Google Sheets",
+    "PostgreSQL",
+]
 
 CELERY_CONFIG = CeleryConfig
 

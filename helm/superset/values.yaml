@@ -56,7 +56,7 @@ envFromSecret: '{{ template "superset.fullname" . }}-env'
 envFromSecrets: []
 
 # -- Extra environment variables that will be passed into pods
-extraEnv: {}
+extraEnv: 
   # Different gunicorn settings, refer to the gunicorn documentation
   # https://docs.gunicorn.org/en/stable/settings.html#
   # These variables are used as Flags at the gunicorn startup
@@ -72,6 +72,9 @@ extraEnv: {}
   # GUNICORN_KEEPALIVE: 2
   # SERVER_LIMIT_REQUEST_LINE: 0
   # SERVER_LIMIT_REQUEST_FIELD_SIZE: 0
+  # SESSION_COOKIE_HTTPONLY: true
+  # TALISMAN_ENABLED: false
+  # WTF_CSRF_ENABLED: true
 
   # OAUTH_HOME_DOMAIN: ..
   # # If a whitelist is not set, any address that can use your OAuth2 endpoint will be able to login.
@@ -132,7 +135,10 @@ extraVolumeMounts: []
 # -- A dictionary of overrides to append at the end of superset_config.py - the name does not matter
 # WARNING: the order is not guaranteed
 # Files can be passed as helm --set-file configOverrides.my-override=my-file.py
-configOverrides: {}
+# configOverrides: {}
+configOverrides:
+  secret: |
+    SECRET_KEY = 'DbuhKpdGptVv63oNKJN/MsJzz1aNOwnWz45sRLCHqQ0/rP5GrHO58faj'
   # extend_timeout: |
   #    # Extend timeout to allow long running queries.
   #    SUPERSET_WEBSERVER_TIMEOUT = ...
@@ -178,7 +184,7 @@ configMountPath: "/app/pythonpath"
 extraConfigMountPath: "/app/configs"
 
 image:
-  repository: apachesuperset.docker.scarf.sh/apache/superset
+  repository: us-central1-docker.pkg.dev/elastic-pocs/superset-test/test-superset-2:v2
   tag: ""
   pullPolicy: IfNotPresent
 
@@ -190,14 +196,20 @@ initImage:
   pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
-  port: 8088
+  type: LoadBalancer
+  port: 80
+  externalIPs:
+    - 35.208.219.168
   annotations: {}
     # cloud.google.com/load-balancer-type: "Internal"
   loadBalancerIP: ~
   nodePort:
     # -- (int)
-    http: nil
+    http: 30300
+bootstrapScript: |
+  #!/bin/bash
+  rm -rf /var/lib/apt/lists/* && \
+  pip install pybigquery \
 
 ingress:
   enabled: false
@@ -242,6 +254,11 @@ hostAliases: []
 # Superset node configuration
 supersetNode:
   replicaCount: 1
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
   # -- Startup command
   # @default -- See `values.yaml`
   command:
@@ -336,6 +353,11 @@ supersetNode:
 # Superset Celery worker configuration
 supersetWorker:
   replicaCount: 1
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
   # -- Worker startup command
   # @default -- a `celery worker` command
   command:

@@ -87,7 +87,8 @@ COPY --chown=superset:superset superset-frontend/package.json superset-frontend/
 
 RUN mkdir -p superset/static \
     && touch superset/static/version_info.json \
-    && pip install --no-cache-dir -r requirements/local.txt
+    && pip install --no-cache-dir -r requirements/local.txt \
+    && pip install --no-cache-dir pybigquery
 
 COPY --chown=superset:superset --from=superset-node /app/superset/static/assets superset/static/assets
 ## Lastly, let's install superset itself
@@ -95,7 +96,7 @@ COPY --chown=superset:superset superset superset
 
 RUN chown -R superset:superset ./* \
     && pip install --no-cache-dir -e . \
-    && flask fab babel-compile --target superset/translations
+    && flask fab babel-compile --target superset/translations 
 
 COPY --chmod=755 ./docker/run-server.sh /usr/bin/
 USER superset
@@ -134,7 +135,7 @@ RUN apt-get update -q \
 COPY ./requirements/*.txt ./docker/requirements-*.txt/ /app/requirements/
 # Cache everything for dev purposes...
 RUN pip install --no-cache-dir -r /app/requirements/docker.txt \
-    && pip install --no-cache-dir -r /app/requirements/requirements-local.txt || true
+    && pip install --no-cache-dir -r /app/requirements/requirements-local.txt
 
 USER superset
 ######################################################################
